@@ -1,9 +1,9 @@
 
 
 import os
-train_normal = os.path.join (r"C:\Users\Isinsu\Desktop\imgs\train\circle")
+train_normal = os.path.join (r"C:\Users\Isinsu\Desktop\imgs\train2\circle")
 
-train_pneumonia= os.path.join(r"C:\Users\Isinsu\Desktop\imgs\train\ellipse")
+train_pneumonia= os.path.join(r"C:\Users\Isinsu\Desktop\imgs\train2\square")
 
 
 import matplotlib.image as mpimg
@@ -35,18 +35,18 @@ from tensorflow.keras import layers
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 datagen = ImageDataGenerator()
 train_generator = datagen.flow_from_directory(
-    r'C:\Users\Isinsu\Desktop\imgs\train',
-    target_size=(28, 28),
+    r'C:\Users\Isinsu\Desktop\imgs\train2',
+    target_size=(200,200),
     batch_size=32,
-    color_mode = 'grayscale',
+    #color_mode = 'grayscale',
     class_mode='binary'
 )
 
 validation_generator = datagen.flow_from_directory(
-    r'C:\Users\Isinsu\Desktop\imgs\validation',
-    target_size=(28, 28),
+    r'C:\Users\Isinsu\Desktop\imgs\validation2',
+    target_size=(200,200),
     batch_size=32,
-    color_mode = 'grayscale',
+    #color_mode = 'grayscale', // bu kodu açarsan input shape'deki 3'ü 1 yapmayı unutma.
     class_mode='binary'
 )
 #from tensorflow.keras.callbacks import EarlyStopping
@@ -54,28 +54,41 @@ validation_generator = datagen.flow_from_directory(
 #early_stopping = EarlyStopping(monitor='val_loss', patience=2)
 
 model = tf.keras.models.Sequential([
-    tf.keras.layers.Conv2D(16, (3,3), activation='relu', input_shape=(28, 28, 1)),
-    tf.keras.layers.MaxPooling2D(2, 2),
+    tf.keras.layers.Conv2D(16, (3,3),padding="same",
+                           activation='linear', input_shape=(200,200, 3)),
+    tf.keras.layers.LeakyReLU(alpha=0.1),
+    tf.keras.layers.MaxPooling2D((2, 2),padding="same"),
+    tf.keras.layers.Dropout(0.25),
     
-    tf.keras.layers.Conv2D(32, (3,3), activation='relu'),
-    tf.keras.layers.MaxPooling2D(2,2),
+    tf.keras.layers.Conv2D(32, (3,3),activation='linear',padding="same"),
+    tf.keras.layers.LeakyReLU(alpha=0.1),
+    tf.keras.layers.MaxPooling2D((2,2),strides=2),
+    tf.keras.layers.Dropout(0.25),
        
-    tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
-    tf.keras.layers.MaxPooling2D(2,2),
+    tf.keras.layers.Conv2D(64, (3,3),activation='linear',padding="same"),
+    tf.keras.layers.LeakyReLU(alpha=0.1),
+    tf.keras.layers.MaxPooling2D((2,2),strides=2),
+    tf.keras.layers.Dropout(0.4),
+    
     
     # Flatten the results to feed into a DNN
     tf.keras.layers.Flatten(),
     
-    tf.keras.layers.Dense(512, activation='relu'),
-    tf.keras.layers.Dense(512, activation='relu'),
+    tf.keras.layers.Dense(128, activation='linear'),
+    tf.keras.layers.LeakyReLU(alpha=0.1),
+    tf.keras.layers.Dropout(0.3),
+    tf.keras.layers.Dense(512, activation='linear'),
     
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
 
+from tensorflow.keras.callbacks import EarlyStopping
+callbacks=[EarlyStopping(patience=9)]
 
 model.summary()
 
 from tensorflow.keras.optimizers import RMSprop
+
 model.compile(loss="binary_crossentropy",
              optimizer=RMSprop(learning_rate=0.0001),
              metrics=['accuracy'])
@@ -84,12 +97,22 @@ model.compile(loss="binary_crossentropy",
 history = model.fit(
     train_generator,
     steps_per_epoch=8,
-    epochs=15,
+    epochs=50,
     verbose=1,
     validation_data = validation_generator,
     validation_steps = 8,
-    #callbacks=[early_stopping]
+    callbacks=callbacks
 )
+
+import pandas as pd
+met_df1 = pd.DataFrame(history.history)
+met_df1
+
+met_df1[["accuracy", "val_accuracy"]].plot()
+plt.xlabel("Epochs")
+plt.ylabel("Accuracy")
+plt.title("Accuracies per Epoch")
+plt.show()
 
 import matplotlib.pyplot as plt
 plt.plot(history.history['accuracy'])
