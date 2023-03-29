@@ -55,29 +55,21 @@ validation_generator = datagen.flow_from_directory(
 
 model = tf.keras.models.Sequential([
     tf.keras.layers.Conv2D(16, (3,3),padding="same",
-                           activation='linear', input_shape=(200,200, 3)),
-    tf.keras.layers.LeakyReLU(alpha=0.1),
-    tf.keras.layers.MaxPooling2D((2, 2),padding="same"),
-    tf.keras.layers.Dropout(0.25),
+                           activation='relu', input_shape=(200,200, 3)),
+    tf.keras.layers.MaxPooling2D((2, 2),strides=2),
     
-    tf.keras.layers.Conv2D(32, (3,3),activation='linear',padding="same"),
-    tf.keras.layers.LeakyReLU(alpha=0.1),
+    tf.keras.layers.Conv2D(32, (3,3),padding="same", activation='relu'),
     tf.keras.layers.MaxPooling2D((2,2),strides=2),
-    tf.keras.layers.Dropout(0.25),
        
-    tf.keras.layers.Conv2D(64, (3,3),activation='linear',padding="same"),
-    tf.keras.layers.LeakyReLU(alpha=0.1),
+    tf.keras.layers.Conv2D(64, (3,3),padding="same", activation='relu'),
     tf.keras.layers.MaxPooling2D((2,2),strides=2),
-    tf.keras.layers.Dropout(0.4),
     
     
     # Flatten the results to feed into a DNN
     tf.keras.layers.Flatten(),
     
-    tf.keras.layers.Dense(128, activation='linear'),
-    tf.keras.layers.LeakyReLU(alpha=0.1),
-    tf.keras.layers.Dropout(0.3),
-    tf.keras.layers.Dense(512, activation='linear'),
+    tf.keras.layers.Dense(512, activation='relu'),
+    tf.keras.layers.Dense(512, activation='relu'),
     
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
@@ -104,6 +96,24 @@ history = model.fit(
     callbacks=callbacks
 )
 
+
+model.save('my_cnn_model.h5')
+
+trainForFineTuning = datagen.flow_from_directory(
+    r'C:\Users\Isinsu\Desktop\imgs\transferlearning\train',
+    target_size=(200,200),
+    batch_size=32,
+    class_mode='binary'
+)
+
+testForFineTuning = datagen.flow_from_directory(
+    r'C:\Users\Isinsu\Desktop\imgs\transferlearning\test',
+    target_size=(200,200),
+    batch_size=32,
+    class_mode='binary'
+)
+
+
 import pandas as pd
 met_df1 = pd.DataFrame(history.history)
 met_df1
@@ -115,13 +125,14 @@ plt.title("Accuracies per Epoch")
 plt.show()
 
 import matplotlib.pyplot as plt
-plt.plot(history.history['accuracy'])
-plt.plot(history.history['val_accuracy'])
-plt.title('Model Accuracies')
-plt.ylabel('Accuracy')
-plt.xlabel('Epoch')
-plt.legend(['train', 'test'], loc='best')
-plt.show()
+
+#plt.plot(history.history['accuracy'])
+#plt.plot(history.history['val_accuracy'])
+#plt.title('Model Accuracies')
+#plt.ylabel('Accuracy')
+#plt.xlabel('Epoch')
+#plt.legend(['train', 'test'], loc='best')
+#plt.show()
 
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
