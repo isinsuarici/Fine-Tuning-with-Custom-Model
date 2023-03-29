@@ -3,9 +3,10 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import EarlyStopping
 
 # Load the trained model
-trained_model = keras.models.load_model(r"C:\Users\Isinsu\Desktop\imgs\my_cnn_model.h5")
+trained_model = keras.models.load_model(r"C:\Users\Isinsu\Desktop\imgs\cnn_model.h5")
 
 # Freeze the layers of the loaded model
 for layer in trained_model.layers:
@@ -20,10 +21,9 @@ x = layers.Dropout(0.5)(x)
 outputs = layers.Dense(1, activation="sigmoid")(x)
 fine_tuned_model = keras.Model(inputs, outputs)
 
-from tensorflow.keras.callbacks import EarlyStopping
 callbacks=[EarlyStopping(patience=5)]
 
-# Increase the learning rate
+# Set learning rate
 opt = keras.optimizers.RMSprop(learning_rate=1e-3)
 
 # Set more layers to be trainable
@@ -61,6 +61,3 @@ history = fine_tuned_model.fit(
     validation_data = testForFineTuning,
     callbacks=callbacks
 )
-
-# Save the model
-fine_tuned_model.save('my_fine_tuned_model.h5')
